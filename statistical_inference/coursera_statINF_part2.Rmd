@@ -1,0 +1,102 @@
+---
+title: "Analysis of ToothGrowth Data"
+output: pdf_document
+---
+This work is done for the course project for Coursera Statistical Inference. 
+The project uses the ToothGrowth dataset in R. 
+
+# Introduction
+Load the data into R and examine the file. Load ggplot library for plots. 
+
+```{r}
+library(ggplot2)
+library(plyr)
+data(ToothGrowth)
+head(ToothGrowth)
+str(ToothGrowth)
+```
+Three variables that are len (numeric), supp (factor), and dose (numeric).
+But dose should be a factor, so convert it from a numeric to factor. 
+```{r}
+ToothGrowth$dose <-as.factor(ToothGrowth$dose)
+```
+
+# Exploratory Data Analysis
+Create a boxplot which will display the mean tooth length, the interquartile range, 
+and total range for the data, by both dose group (0.5, 1, or 2), and separated by
+supplement group (OJ or VC). This will best show the potentially difference between
+the groups.
+
+```{r, echo=FALSE, fig.height=3, fig.width=5}
+a <- ggplot(ToothGrowth, aes(x=dose, y=len))
+a + geom_boxplot(aes(fill = supp)) +
+    theme_bw() +
+    ggtitle("Tooth length by Treatment and Dose")
+```
+Dose of both types of supplement appear to have an effect on tooth length. 
+
+# Data Summary
+Summarize the tooth length data, finding the overall mean, as well as the mean by 
+group (group being dose and supplement group).
+```{r}
+### mean of columns
+mean(ToothGrowth$len)
+### sum and mean of len by supp and dose
+ddply(ToothGrowth, .(supp, dose), summarise, mean=mean(len), sum=sum(len))
+```
+
+# Confidence intervals and hypothesis test
+## Test Tooth Length by Supplement
+Run a t-test to assess if supplement leads to significant changes in tooth growth. 
+```{r}
+t.test(len ~ supp, paired = F, var.equal = F, data = ToothGrowth)
+```
+P-value is greater than 0.05, therefore we can not reject the null hypothesis that
+this is not difference between the two supplement groups on tooth length. We can 
+further see evidence of this given the 95% confidence intervals contain 0. 
+
+## Test Tooth Length by Dose
+In order to examine the effects of dose on tooth length, we first need to create 
+dummay variables for dose in order to perform a t-test (this is because dose has
+three levels instead of two).
+```{r}
+dose12 <- subset(ToothGrowth, dose %in% c(0.5, 1.0))
+dose13 <- subset(ToothGrowth, dose %in% c(0.5, 2.0))
+dose23 <- subset(ToothGrowth, dose %in% c(1.0, 2.0))
+```
+Run t-tests comparing dose 0.5 to 1, 0.5 to 2 and 1 to 2. 
+```{r}
+t.test(len ~ dose, paired = F, var.equal = F, data = dose12)
+t.test(len ~ dose, paired = F, var.equal = F, data = dose13)
+t.test(len ~ dose, paired = F, var.equal = F, data = dose23)
+```
+Each of those t-test results i p-value below 0.05, which means we can reject the
+null hypothesis that there is no difference between the groups, and instead accept
+the alternative hypothesis. Furthermore, we can also see in the output that the 
+95 % confidence intervals for each t-test do not contain 0. Therefore it seems that 
+dose is having an effect on tooth length. 
+
+## Test Tooth Length by Dose and Supplement
+Subset the data by dose. 
+```{r}
+dose5 <- subset(ToothGrowth, dose == 0.5)
+dose10 <- subset(ToothGrowth, dose == 1.0)
+dose20 <- subset(ToothGrowth, dose == 2.0)
+```
+Run t-tests within each subset of dose for the relationship between tooth
+length and supplement. 
+```{r}
+t.test(len ~ supp, paired = F, var.equal = F, data = dose5)
+t.test(len ~ supp, paired = F, var.equal = F, data = dose10)
+t.test(len ~ supp, paired = F, var.equal = F, data = dose20)
+```
+P-values were below 0.05 in the dose subests of 0.5 and 1.0, but not for 2.0. 
+This means we can reject the null hypothesis for the for supplement type and dose 
+effect tooth length together at doses 0.5 and 1.0 but not at 2.0. 
+
+# Conclusions
+We see that there are difference in tooth length by supplement at specific doses,
+but not all doses. We see for doses 0.5 and 1.0 OJ results in significantly (p<0.05)
+longer tooths than VC. However, this is not true for doses of 2.0 where there was
+not a statistically significant difference in tooth length between the groups.
+

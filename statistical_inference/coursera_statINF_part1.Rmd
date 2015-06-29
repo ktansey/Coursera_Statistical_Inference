@@ -1,0 +1,125 @@
+---
+title: "Exponential Distribution and the Cental Limit Theory"
+output: pdf_document
+---
+
+# Overview
+
+For this part of the course project for Coursera Statistical Inference, I am 
+investigating the exponential distribution in R and comparing it with the 
+Central Limit Theorem. I will be answering three questions comparing sample 
+means and variance to their theortetical counterparts. I will be simulating the
+exponential distribution in R with rexp(n, lambda) where lambda is the rate parameter. 
+
+Lambda will set to 0.2 for all of the simulations. I will be taking the 
+distribution of averages of 40 exponentials, and performing 1,000 simulations. 
+
+First load reuqired libraries for plotting.
+```{r}
+library(ggplot2)
+```
+
+# Simulations
+Set parameters for simulations using guidelines stated above. Because we are 
+running simulations, we will also set the seed to ensure the data is reproducible. 
+```{r}
+lambda <- 0.2
+n <- 40 
+number_simulations <- 1000
+set.seed(12345)
+```
+Mean of each random exponential is calculated for the thousand simulations and 
+stored in a dataframe called "means". This is done using the values defined 
+above in the calculations. 
+```{r}
+### run simulation getting the mean for 1000 simulations
+means <- NULL
+for (i in 1:number_simulations) means = c(means, mean(rexp(n, lambda)))
+means <- as.data.frame(means)
+```
+```{r, echo=F, fig.height=3, fig.width=4}
+a <- ggplot(means, aes(x=means))
+a + geom_histogram(alpha = .50, binwidth=.2, colour="black", fill="white", 
+                   aes(y = ..density..)) +
+    ggtitle("Histogram of the means from\nthe 1000 simulations") +
+    theme_bw()
+```
+
+# Sample Mean versus Theoretical Mean
+Theoretical mean of an exponetial distribution is 1/lambda. This is compared to 
+the mean of the simulation results. 
+```{r}
+### theoretical mean 
+theor_mean <- 1/lambda
+### simulation mean
+sample_mean <- mean(means$means)
+print(c(theor_mean, sample_mean))
+```
+My sample mean (4.972) is very close the the theoretical mean (5).
+
+```{r, echo=FALSE, fig.height=3, fig.width=4}
+a <- ggplot(means, aes(x=means))
+a + geom_histogram(alpha = .50, binwidth=.2, colour="black", fill="white", 
+                   aes(y = ..density..)) +
+    geom_vline(aes(xintercept=theor_mean)) +
+    geom_vline(aes(xintercept=sample_mean, colour = "red")) +
+    theme_bw() +
+    ggtitle("Histogram of the means from\nthe 1000 simulations\nBlack line is theoretical mean\nRed line is sample mean")
+```
+
+# Sample Variance versus Theoretical Variance
+Theoretical sampling variance is 1/(n*lambda^2), where n in this case is 
+equal to 40. This is compared to the sample variance for the simulated results. 
+```{r}
+### theoretical variance of an exponetial distribution is 1/(n*lambda^2)
+theor_var <-  1/(n * lambda^2)
+### simulation variance
+sample_var <- var(means$means)
+print(c(theor_var, sample_var))
+```
+My theoretical variance (0.595) is close to the theoretical variance (0.625).
+
+```{r, echo=FALSE, fig.height=3, fig.width=4}
+a <- ggplot(means, aes(x=means))
+a + geom_histogram(alpha = .50, binwidth=.2, colour="black", fill="white", 
+                   aes(y = ..density..)) +
+    geom_vline(aes(xintercept=theor_mean-theor_var)) +
+    geom_vline(aes(xintercept=theor_mean+theor_var)) +
+    geom_vline(aes(xintercept=sample_mean+sample_var, colour = "red")) +
+    geom_vline(aes(xintercept=sample_mean-sample_var, colour = "red")) +
+    theme_bw() +
+    ggtitle("Histogram of the means from\nthe 1000 simulations\nBlack lines are theoretical variance\nRed lines are sample variance")
+```
+
+# Distribution
+Create a plot to compare my distribution of simulated means to the normal distribution.
+
+```{r, echo=FALSE, fig.height=3, fig.width=4}
+a <- ggplot(means, aes(x=means))
+a + geom_histogram(alpha = .50, binwidth=.2, colour="black", fill="white", 
+                   aes(y = ..density..)) +
+    stat_function(fun = dnorm, arg = list(mean = theor_mean,
+                                          sd = sqrt(theor_var))) +
+    geom_density(inherit.aes=F, aes(rnorm(n = number_simulations, 
+                                          mean = sample_mean,
+                                          sd = sqrt(sample_var))), 
+                 linetype='dashed', colour = "red") +
+    geom_vline(aes(xintercept=theor_mean)) +
+    geom_vline(aes(xintercept=sample_mean, colour = "red")) +
+    theme_bw() +
+    ggtitle("Histogram of the means from\nthe 1000 simulations\nCompared with the normal distribution (black line)")
+```
+
+The distribution of my simulation means (dotted red line) is very close to the 
+normal distribution (solid black line). Taking a greater number of simulations 
+would results in the simulation means distribution falling even closer to that 
+of the normal distribution. 
+
+# Conclusions
+The distribution of the averages of the exponential distribution is nearly normal.
+A exponential random distributoin have a minimum value of zero and a long skew tail.
+This distribution looks entirely different to the almost normal distribution 
+obtained after taking the average of a thousand simulations. 
+Thus I have demonstated that with larger sample size, the distribution of 
+averages become closer to normal distribution even using the exponential 
+distribution, which is the Central Limit Theorem.
